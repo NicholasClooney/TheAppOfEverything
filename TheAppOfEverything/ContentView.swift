@@ -28,15 +28,9 @@ struct ContentView: View {
         .padding()
     }
 
-    private func randomize() {
-        let choices = [choice1, choice2].filter { !$0.isEmpty }
-        if let randomChoice = choices.randomElement() {
-            result = randomChoice
-            history.append(randomChoice)
-            historyString = history.reversed().enumerated().map { "\($0 + 1). \($1)" }.joined(separator: "\n")
-        } else {
-            result = "Please enter at least one choice."
-        }
+    private func clearHistory() {
+        history = []
+        historyString = ""
     }
 
     private func reset() {
@@ -47,16 +41,51 @@ struct ContentView: View {
         historyString = ""
     }
 
-    private var inputFields: some View {
-        HStack {
-            TextField("Choice #1", text: $choice1)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
-
-            TextField("Choice #2", text: $choice2)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
+    private func randomize() {
+        let choices = [choice1, choice2].filter { !$0.isEmpty }
+        if let randomChoice = choices.randomElement() {
+            result = randomChoice
+            history.append(randomChoice)
+            historyString = history
+                .enumerated() // Enumerate the history first to preserve the order
+                .reversed()
+                .map { "\($0.offset + 1). \($0.element)" }
+                .joined(separator: "\n")
+        } else {
+            result = "Please enter at least one choice."
         }
+    }
+
+    private var inputFields: some View {
+        VStack {
+            HStack {
+                TextField("Choice #1", text: $choice1)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
+
+                TextField("Choice #2", text: $choice2)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
+            }
+            Text(historicalOddsText)
+                .font(.subheadline)
+                .foregroundColor(.gray)
+                .padding(.top, 4)
+        }
+    }
+
+    private var historicalOddsText: String {
+        let total = history.count
+
+        guard total > 0 else { return "Historical Odds: N/A" }
+
+        let choice1Count = history.filter { $0 == choice1 }.count
+        let choice2Count = history.filter { $0 == choice2 }.count
+
+        let choice1Odds = (Double(choice1Count) / Double(total) * 100).rounded()
+        let choice2Odds = (Double(choice2Count) / Double(total) * 100).rounded()
+
+        return "Historical Odds: \(choice1): \(choice1Odds)% | \(choice2): \(choice2Odds)%"
     }
 
     private var actionButtons: some View {
@@ -72,13 +101,24 @@ struct ContentView: View {
             }
             .padding()
 
-            Button(action: reset) {
-                Text("Reset")
-                    .font(.subheadline)
-                    .padding(8)
-                    .background(Color.red)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
+            HStack {
+                Button(action: reset) {
+                    Text("Reset")
+                        .font(.subheadline)
+                        .padding(8)
+                        .background(Color.red)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
+
+                Button(action: clearHistory) {
+                    Text("Clear History")
+                        .font(.subheadline)
+                        .padding(8)
+                        .background(Color.orange)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
             }
             .padding(.bottom)
         }
