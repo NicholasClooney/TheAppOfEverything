@@ -8,28 +8,59 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var choice1: String = "SAIC"
-    @State private var choice2: String = "Goldsmith"
-    @State private var result: String? = nil
+    @State private var choice1 = "SAIC"
+    @State private var choice2 = "Goldsmith"
+    @State private var result = ""
     @State private var history: [String] = []
-
+    @State private var historyString = ""
 
     var body: some View {
         VStack {
             Spacer()
-
-            HStack {
-                TextField("Choice #1", text: $choice1)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
-
-                TextField("Choice #2", text: $choice2)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
-            }
-
+            inputFields
             Spacer()
+            actionButtons
+            resultText
+            Spacer()
+            historyHeader
+            historyScrollView
+        }
+        .padding()
+    }
 
+    private func randomize() {
+        let choices = [choice1, choice2].filter { !$0.isEmpty }
+        if let randomChoice = choices.randomElement() {
+            result = randomChoice
+            history.append(randomChoice)
+            historyString = history.reversed().enumerated().map { "\($0 + 1). \($1)" }.joined(separator: "\n")
+        } else {
+            result = "Please enter at least one choice."
+        }
+    }
+
+    private func reset() {
+        choice1 = ""
+        choice2 = ""
+        result = ""
+        history = []
+        historyString = ""
+    }
+
+    private var inputFields: some View {
+        HStack {
+            TextField("Choice #1", text: $choice1)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+
+            TextField("Choice #2", text: $choice2)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+        }
+    }
+
+    private var actionButtons: some View {
+        VStack {
             Button(action: randomize) {
                 Text("Choose My Fate")
                     .font(.headline)
@@ -41,42 +72,38 @@ struct ContentView: View {
             }
             .padding()
 
-            if let result = result {
-                Text("Result: \(result)")
-                    .font(.title)
-                    .padding()
+            Button(action: reset) {
+                Text("Reset")
+                    .font(.subheadline)
+                    .padding(8)
+                    .background(Color.red)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
             }
-
-            Spacer()
-
-            Text("History")
-                .font(.headline)
-                .padding(.top)
-
-            ScrollView {
-                VStack(alignment: .leading) {
-                    ForEach(history, id: \.self) { item in
-                        Text("\(index + 1)" + item)
-                            .padding(.vertical, 2)
-                    }
-                }
-            }
-            .frame(maxHeight: 200) // Limit the height of the history list
-            .padding()
-
+            .padding(.bottom)
         }
-        .padding()
     }
 
-    private func randomize() {
-        let choices = [choice1, choice2].filter { !$0.isEmpty }
-        if let randomChoice = choices.randomElement() {
-            result = randomChoice
+    private var resultText: some View {
+        Text("Result: \(result)")
+            .font(.title)
+            .padding()
+    }
 
-            history.append(randomChoice) // Add the result to the history
-        } else {
-            result = "Please enter at least one choice."
+    private var historyHeader: some View {
+        Text("History")
+            .font(.headline)
+            .padding(.top)
+    }
+
+    private var historyScrollView: some View {
+        ScrollView {
+            Text(historyString)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding()
         }
+        .frame(maxHeight: 200)
+        .padding()
     }
 }
 
